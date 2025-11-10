@@ -40,5 +40,5 @@ jobs:
         
       # Step 5: Verify code formatting with Ruff (--diff: output a diff of the changes that would be made.)
       - name: Check formatting
-        run: ruff format app rosemary core 
+        run: ruff format app rosemary core --check --diff
         
