@@ -1,0 +1,59 @@
+name: Bug Report
+description: Envía un informe de fallo.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción del fallo
+      description: Breve descripción del problema.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      value: |
+        1. Ir a '...'
+        2. Pulsar en '...'
+        3. Bajar a '...'
+        4. Ver el error
+    validations:
+      required: true
+  - type: textarea
+    id: comportamiento-observado
+    attributes:
+      label: Comportamiento observado
+      description: Descripción detallada de lo que ocurrió.
+    validations:
+      required: true
+  - type: textarea
+    id: comportamiento-esperado
+    attributes:
+      label: Comportamiento esperado
+      description: Descripción detallada de lo que esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    id: capturas
+    attributes:
+      label: Capturas de pantalla
+      description: Añade capturas de pantalla que ayuden a entender el problema (si son necesarias).
+  - type: input
+    id: so
+    attributes:
+      label: Sistema operativo
+    validations:
+      required: true
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador
+    validations:
+      required: true
+  - type: input
+    id: version-navegador
+    attributes:
+      label: Versión del navegador
+    validations:
+      required: true
