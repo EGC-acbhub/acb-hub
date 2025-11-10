@@ -34,6 +34,7 @@ packages = ["rosemary"]
 [tool.ruff]
 line-length = 120
 target-version = "py313"
+output-format = "github"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"] # E: pycodestyle, F: pyflakes, I: isort (import sorting)
