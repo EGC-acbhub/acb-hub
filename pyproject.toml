@@ -31,6 +31,13 @@ packages = ["rosemary"]
 # Formatting & linting
 # --------------------
 
+[tool.ruff]
+line_length = 120
+profile = "black"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"] # E: pycodestyle, F: pyflakes, I: isort (import sorting)
+
 [tool.black]
 line-length = 120
 target-version = ["py313"]
