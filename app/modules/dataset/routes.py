@@ -6,24 +6,31 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
-from flask_paginate import Pagination
-from flamapy.core.discover import DiscoverMetamodels  # type: ignore
-from flamapy.core.discover import DiscoverMetamodels  # type: ignore
-dm = DiscoverMetamodels()
 
-from flask import (abort, jsonify, make_response, redirect, render_template,
-                   request, send_from_directory, url_for)
+from flask import (
+    abort,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DSDownloadRecord
-from app.modules.dataset.services import (AuthorService, DataSetService,
-                                          DOIMappingService,
-                                          DSDownloadRecordService,
-                                          DSMetaDataService,
-                                          DSViewRecordService)
-from app.modules.fakenodo.services import FakenodoService
+from app.modules.dataset.services import (
+    AuthorService,
+    DataSetService,
+    DOIMappingService,
+    DSDownloadRecordService,
+    DSMetaDataService,
+    DSViewRecordService,
+)
+from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +38,7 @@ logger = logging.getLogger(__name__)
 dataset_service = DataSetService()
 author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
-fakenodo_service = FakenodoService()
+zenodo_service = ZenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 
@@ -56,37 +63,36 @@ def create_dataset():
             logger.exception(f"Exception while create dataset data in local {exc}")
             return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
 
-        # send dataset as deposition to Fakenodo
+        # send dataset as deposition to Zenodo
         data = {}
-        nodo = "Fakenodo"
         try:
-            fakenodo_response_json = fakenodo_service.create_new_deposition(dataset)
-            response_data = json.dumps(fakenodo_response_json)
+            zenodo_response_json = zenodo_service.create_new_deposition(dataset)
+            response_data = json.dumps(zenodo_response_json)
             data = json.loads(response_data)
         except Exception as exc:
             data = {}
-            fakenodo_response_json = {}
-            logger.exception(f"Exception while create dataset data in {nodo} {exc}")
+            zenodo_response_json = {}
+            logger.exception(f"Exception while create dataset data in Zenodo {exc}")
 
-        if "id" in data:
+        if data.get("conceptrecid"):
             deposition_id = data.get("id")
 
-            # update dataset with deposition id in Fakenodo
+            # update dataset with deposition id in Zenodo
             dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
 
             try:
-                # iterate for each feature model (one feature model = one request to Fakenodo)
+                # iterate for each feature model (one feature model = one request to Zenodo)
                 for feature_model in dataset.feature_models:
-                    fakenodo_service.upload_file(dataset, deposition_id, feature_model)
+                    zenodo_service.upload_file(dataset, deposition_id, feature_model)
 
                 # publish deposition
-                fakenodo_service.publish_deposition(deposition_id)
+                zenodo_service.publish_deposition(deposition_id)
 
                 # update DOI
-                deposition_doi = fakenodo_service.get_doi(deposition_id)
+                deposition_doi = zenodo_service.get_doi(deposition_id)
                 dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
             except Exception as e:
-                msg = f"it has not been possible upload feature models in {nodo} and update the DOI: {e}"
+                msg = f"it has not been possible upload feature models in Zenodo and update the DOI: {e}"
                 return jsonify({"message": msg}), 200
 
         # Delete temp folder
@@ -129,9 +135,7 @@ def upload():
         # Generate unique filename (by recursion)
         base_name, extension = os.path.splitext(file.filename)
         i = 1
-        while os.path.exists(
-            os.path.join(temp_folder, f"{base_name} ({i}){extension}")
-        ):
+        while os.path.exists(os.path.join(temp_folder, f"{base_name} ({i}){extension}")):
             i += 1
         new_filename = f"{base_name} ({i}){extension}"
         file_path = os.path.join(temp_folder, new_filename)
@@ -186,16 +190,12 @@ def download_dataset(dataset_id):
 
                 zipf.write(
                     full_path,
-                    arcname=os.path.join(
-                        os.path.basename(zip_path[:-4]), relative_path
-                    ),
+                    arcname=os.path.join(os.path.basename(zip_path[:-4]), relative_path),
                 )
 
     user_cookie = request.cookies.get("download_cookie")
     if not user_cookie:
-        user_cookie = str(
-            uuid.uuid4()
-        )  # Generate a new unique identifier if it does not exist
+        user_cookie = str(uuid.uuid4())  # Generate a new unique identifier if it does not exist
         # Save the cookie to the user's browser
         resp = make_response(
             send_from_directory(
@@ -218,7 +218,7 @@ def download_dataset(dataset_id):
     existing_record = DSDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        download_cookie=user_cookie
+        download_cookie=user_cookie,
     ).first()
 
     if not existing_record:
@@ -240,7 +240,7 @@ def subdomain_index(doi):
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         # Redirect to the same path with the new DOI
-        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
     # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
@@ -251,29 +251,9 @@ def subdomain_index(doi):
     # Get dataset
     dataset = ds_meta_data.data_set
 
-    files = [file for fm in dataset.feature_models for file in fm.files]
-    config_number = request.args.get('config_number', default=0, type=int)
-    core_features = request.args.get('core_features', default=0, type=int)
-    DataSetService.filterFiles(files, config_number, core_features)
-    count = len(files)
-    page_num = request.args.get('page', 1, type=int)
-    per_page = 5
-    start_index = ((page_num-1) * per_page)
-    end_index = min(start_index+per_page, count)
-    if end_index > count:
-        end_index = count
-    pagination = Pagination(page=page_num, total=count, per_page=per_page,
-                            display_msg=f'Mostrando archivos {start_index} - {end_index} de un total de  {count}')
-    ls = []
-    if len(files) >= per_page:
-        for i in range(start_index, end_index):
-            ls.append(files[i])
-    else:
-        ls = files
     # Save the cookie to the user's browser
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset, pagination=pagination,
-                                         files=ls, count=count))
+    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
@@ -288,24 +268,5 @@ def get_unsynchronized_dataset(dataset_id):
 
     if not dataset:
         abort(404)
-    files = [file for fm in dataset.feature_models for file in fm.files]
-    config_number = request.args.get('config_number', default=0, type=int)
-    core_features = request.args.get('core_features', default=0, type=int)
-    DataSetService.filterFiles(files, config_number, core_features)
-    count = len(files)
-    page_num = request.args.get('page', 1, type=int)
-    per_page = 5
-    start_index = ((page_num-1) * per_page)
-    end_index = min(start_index+per_page, count)
-    if end_index > count:
-        end_index = count
-    pagination = Pagination(page=page_num, total=count, per_page=per_page,
-                            display_msg=f'Mostrando archivos {start_index} - {end_index} de un total de  {count}')
-    ls = []
-    if len(files) >= per_page:
-        for i in range(start_index, end_index):
-            ls.append(files[i])
-    else:
-        ls = files
-    return render_template("dataset/view_dataset.html", dataset=dataset, pagination=pagination,
-                                        files=ls, count = count)
+
+    return render_template("dataset/view_dataset.html", dataset=dataset)

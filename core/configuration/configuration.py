@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-USE_FAKENODO = True
 
 def uploads_folder_name():
     return os.getenv("UPLOADS_DIR", "uploads")
