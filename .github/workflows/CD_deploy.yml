@@ -1,0 +1,32 @@
+name: Deploy to Koyeb
+
+on:
+
+  release:
+    # Trigger only when a release is published
+    types: [published]
+
+  # The workflow_call event is used to trigger the job from another workflow, in
+  # which case the git-url must be set to the repository to build.
+  workflow_call:
+    secrets:
+      KOYEB_API_KEY:
+        required: true
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Koyeb CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+          export PATH=$HOME/.koyeb/bin:$PATH
+
+      - name: Redeploy service
+        env:
+          KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+        run: |
+          /home/runner/.koyeb/bin/koyeb service redeploy egc/acb-hub --token "$KOYEB_API_KEY" --use-cache --skip-build=false
