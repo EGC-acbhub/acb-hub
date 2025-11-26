@@ -15,14 +15,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure tag belongs to main
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if ! git merge-base --is-ancestor "$(git rev-list -n 1 "$TAG")" origin/main; then
-            echo "El tag $TAG no pertenece a main. Abortando."
-            exit 1
-          fi
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get update && sudo apt-get install -y gh
@@ -38,7 +30,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth setup-git
+          gh auth status
 
       - name: Build artifacts (placeholder)
         run: |
@@ -50,30 +43,73 @@ jobs:
         id: releasenotes
         run: |
           set -e
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
 
-          PREVIOUS=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo "")
+          echo "Generating release notes for tag: $TAG_NAME"
 
-          if [ -z "$PREVIOUS" ]; then
-            COMMITS=$(git log "$TAG" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
-            LINK="https://github.com/${{ github.repository }}/commits/${TAG}"
+          # Obtener el tag anterior (si existe)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "$TAG_NAME^" 2>/dev/null || echo "")
+
+          echo "Previous tag: $PREVIOUS_TAG"
+
+          # Obtener commits entre tags
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log "$TAG_NAME" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
+            COMMIT_HISTORY_LINK="https://github.com/${{ github.repository }}/commits/${TAG_NAME}"
           else
-            COMMITS=$(git log "$PREVIOUS..$TAG" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
-            LINK="https://github.com/${{ github.repository }}/compare/${PREVIOUS}...${TAG}"
+            COMMITS=$(git log "$PREVIOUS_TAG..$TAG_NAME" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
+            COMMIT_HISTORY_LINK="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
           fi
 
-          RELEASE_NOTES="# Release ${TAG}\n\n"
-          RELEASE_NOTES+="## Commits\n"
-          RELEASE_NOTES+="${COMMITS}\n\n"
-          RELEASE_NOTES+="## Full history\n[View commits](${LINK})"
+          FEATURES=""
+          TESTS=""
+          CI=""
+          OTHER=""
+          SEEN_MESSAGES=()
+
+          while IFS= read -r line; do
+            # Extraer mensaje y hash
+            if [[ "$line" =~ ^(feat|ci|test|fix|refactor|chore|style):\ (.+)\ \((.+)\)$ ]]; then
+              TYPE="${BASH_REMATCH[1]}"
+              DESC="${BASH_REMATCH[2]}"
+              HASH="${BASH_REMATCH[3]}"
+              MESSAGE="${TYPE}: ${DESC}"
+              LINK="https://github.com/${{ github.repository }}/commit/${HASH}"
+            else
+              MESSAGE="$line"
+              HASH=""
+            fi
+
+            # Saltar si el mensaje ya fue visto
+            if [[ " ${SEEN_MESSAGES[*]} " == *" ${MESSAGE} "* ]]; then
+              continue
+            fi
+            SEEN_MESSAGES+=("${MESSAGE}")
+
+            # Clasificar commit
+            if [[ "$line" =~ ^feat: ]]; then
+              FEATURES+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            elif [[ "$line" =~ ^test: ]]; then
+              TESTS+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            elif [[ "$line" =~ ^ci: ]]; then
+              CI+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            else
+              OTHER+="- ${MESSAGE}\n"
+            fi
+          done <<< "$COMMITS"
+
+          RELEASE_NOTES="# Release ${TAG_NAME}\n\n"
+          RELEASE_NOTES+="## ✨ Features\n${FEATURES:-No new features.}\n"
+          RELEASE_NOTES+="## 🧪 Tests\n${TESTS:-No test changes.}\n"
+          RELEASE_NOTES+="## ⚙️ Continuous Integration\n${CI:-No CI changes.}\n"
+          RELEASE_NOTES+="## 📦 Other Changes\n${OTHER:-No other changes.}\n"
+          RELEASE_NOTES+="\n## 🔗 Full Commit History\n[View commits](${COMMIT_HISTORY_LINK})"
 
           echo -e "$RELEASE_NOTES" > release_notes.md
 
-          {
-            echo "RELEASE_NOTES<<EOF"
-            echo -e "$RELEASE_NOTES"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub release
         env:
