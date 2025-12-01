@@ -55,7 +55,7 @@ def test_upload_dataset():
         driver.get(f"{host}/dataset/upload")
         wait_for_page_to_load(driver)
 
-        # Find basic info and UVL model and fill values
+    # Find basic info and CSV model and fill values
         title_field = driver.find_element(By.NAME, "title")
         title_field.send_keys("Title")
         desc_field = driver.find_element(By.NAME, "desc")
@@ -82,9 +82,9 @@ def test_upload_dataset():
         affiliation_field1 = driver.find_element(By.NAME, "authors-1-affiliation")
         affiliation_field1.send_keys("Club1")
 
-        # Obtén las rutas absolutas de los archivos
-        file1_path = os.path.abspath("app/modules/dataset/uvl_examples/file1.uvl")
-        file2_path = os.path.abspath("app/modules/dataset/uvl_examples/file2.uvl")
+        # Obtén las rutas absolutas de los archivos CSV de ejemplo
+        file1_path = os.path.abspath("app/modules/dataset/csv_examples/file1.csv")
+        file2_path = os.path.abspath("app/modules/dataset/csv_examples/file2.csv")
 
         # Subir el primer archivo
         dropzone = driver.find_element(By.CLASS_NAME, "dz-hidden-input")
@@ -96,11 +96,11 @@ def test_upload_dataset():
         dropzone.send_keys(file2_path)
         wait_for_page_to_load(driver)
 
-        # Add authors in UVL models
+    # Add authors in CSV models
         show_button = driver.find_element(By.ID, "0_button")
         show_button.send_keys(Keys.RETURN)
-        add_author_uvl_button = driver.find_element(By.ID, "0_form_authors_button")
-        add_author_uvl_button.send_keys(Keys.RETURN)
+        add_author_csv_button = driver.find_element(By.ID, "0_form_authors_button")
+        add_author_csv_button.send_keys(Keys.RETURN)
         wait_for_page_to_load(driver)
 
         name_field = driver.find_element(By.NAME, "feature_models-0-authors-2-name")

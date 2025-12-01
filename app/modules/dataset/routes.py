@@ -121,8 +121,9 @@ def upload():
     file = request.files["file"]
     temp_folder = current_user.temp_folder()
 
-    if not file or not file.filename.endswith(".uvl"):
-        return jsonify({"message": "No valid file"}), 400
+    # Accept only CSV files
+    if not file or not file.filename.lower().endswith(".csv"):
+        return jsonify({"message": "No valid file - only .csv files are accepted"}), 400
 
     # create temp folder
     if not os.path.exists(temp_folder):
@@ -149,7 +150,7 @@ def upload():
     return (
         jsonify(
             {
-                "message": "UVL uploaded and validated successfully",
+                "message": "CSV uploaded successfully",
                 "filename": new_filename,
             }
         ),

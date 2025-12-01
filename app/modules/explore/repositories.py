@@ -24,7 +24,8 @@ class ExploreRepository(BaseRepository):
             filters.append(Author.name.ilike(f"%{word}%"))
             filters.append(Author.affiliation.ilike(f"%{word}%"))
             filters.append(Author.orcid.ilike(f"%{word}%"))
-            filters.append(FMMetaData.uvl_filename.ilike(f"%{word}%"))
+            # search by csv filename
+            filters.append(FMMetaData.csv_filename.ilike(f"%{word}%"))
             filters.append(FMMetaData.title.ilike(f"%{word}%"))
             filters.append(FMMetaData.description.ilike(f"%{word}%"))
             filters.append(FMMetaData.publication_doi.ilike(f"%{word}%"))
