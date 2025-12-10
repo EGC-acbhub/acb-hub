@@ -38,7 +38,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <h1><b>{{ dataset.ds_meta_data.title }}</b></h1>
                     <div>
-                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_league() }}</span>
                     </div>
                 </div>
                 <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
@@ -69,46 +69,7 @@
 
                 </div>
 
-                <div class="row mb-2">
-
-                    <div class="col-md-4 col-12">
-                        <span class=" text-secondary">
-                            Authors
-                        </span>
-                    </div>
-                    <div class="col-md-8 col-12">
-                        {% for author in dataset.ds_meta_data.authors %}
-                        <p class="p-0 m-0">
-                            {{ author.name }}
-                            {% if author.affiliation %}
-                            ({{ author.affiliation }})
-                            {% endif %}
-                            {% if author.orcid %}
-                            ({{ author.orcid }})
-                            {% endif %}
-                        </p>
-                        {% endfor %}
-                    </div>
-
-
-                </div>
-
-                {% if dataset.ds_meta_data.publication_doi %}
-                <div class="row mb-2">
-                    <div class="col-md-4 col-12">
-                        <span class="text-secondary">
-                            Publication DOI
-                        </span>
-                    </div>
-                    <div class="col-md-8 col-12">
-                        <a href="{{ dataset.ds_meta_data.publication_doi }}">
-                            {{ dataset.ds_meta_data.publication_doi }}
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if dataset.ds_meta_data.dataset_doi %}
+                {% if dataset.ds_meta_data.deposition_id %}
                 <div class="row mb-2">
                     
                         <div class="col-md-4 col-12">
@@ -157,31 +118,6 @@
                 
 
             </div>
-
-            {% if dataset.ds_meta_data.dataset_doi %}
-            <div class="card-body" style="padding-top: 0px">
-
-                <div id="dataset_doi_uvlhub" style="display: none">
-                    {{ dataset.get_uvlhub_doi() }}
-                </div>
-
-                <button type="button" class="btn doi_button btn-sm" onclick="copyText('dataset_doi_uvlhub')">
-                    <span class="button_doi_id">
-                        <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"></i>
-                        <b>DOI</b>
-                    </span>
-                    <span class="doi_text">
-                        {{ dataset.get_uvlhub_doi() }}
-                    </span>
-                </button>
-                
-                <div id="dataset_doi_uvlhub" style="display: none">
-                    {{ dataset.get_uvlhub_doi() }}
-                </div>
-                
-            </div>
-            {% endif %}
-
         </div>
 
         <div class="card">
@@ -237,7 +173,7 @@
 
                 <div class="row">
                     <div class="col-12 d-flex justify-content-between align-items-center">
-                        <h4 style="margin-bottom: 0px">UVL models</h4>
+                        <h4 style="margin-bottom: 0px">CSV files</h4>
                         <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.get_files_count() }}</span></h4>
                     </div>
                 </div>
@@ -246,8 +182,8 @@
             </div>
             
 
-            {% for feature_model in dataset.feature_models %}
-                {% for file in feature_model.files %}
+            {% for basket_model in dataset.basket_models %}
+                {% for file in basket_model.files %}
                     <div class="list-group-item">
                         
                         <div class="row">
@@ -279,13 +215,8 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop{{ file.id }}">
                                         <li>
-                                            <a class="dropdown-item" href="javascript:void(0);" onclick="checkUVL('{{ file.id }}')">Syntax check</a>
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="checkCSV('{{ file.id }}')">Syntax check</a>
                                         </li>
-                                        <!--
-                                        <li>
-                                            <a class="dropdown-item" href="{{ url_for('flamapy.valid', file_id=file.id) }}">SAT validity check</a>
-                                        </li>
-                                        -->
                                     </ul>
                                 </div>
                                 
@@ -296,22 +227,8 @@
                                     <ul class="dropdown-menu" aria-labelledby="btnGroupDropExport{{ file.id }}">
                                         <li>
                                             <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=file.id) }}">
-                                                UVL
+                                                CSV
                                             </a>
-                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=file.id) }}">
-                                                Glencoe
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=file.id) }}">
-                                                DIMACS
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=file.id) }}">
-                                                SPLOT
-                                            </a>
-                                        </li>
                                     </ul>
                                 </div>
                                 
@@ -392,11 +309,11 @@
         document.getElementById("loading").style.display = "none";
     }
 
-    function checkUVL(file_id) {
+    function checkCSV(file_id) {
     const outputDiv = document.getElementById('check_' + file_id);
     outputDiv.innerHTML = ''; // Clear previous output
 
-    fetch(`/flamapy/check_uvl/${file_id}`)
+    fetch(`/csv_validation/check_csv/${file_id}`)
         .then(response => {
             return response.json().then(data => ({
                 status: response.status,
@@ -441,7 +358,7 @@
         const micropip = pyodide.pyimport("micropip");
         //await micropip.install("/assets/web_assembly/antlr4_python3_runtime-4.7.2-py3-none-any.whl");
         await micropip.install("antlr4-python3-runtime==4.13.1");
-        await micropip.install("uvlparser==2.0.1");
+    // CSV-specific in-browser parsing is not supported; UVL parser removed.
         //await micropip.install("afmparser==1.0.0");
 
         await pyodide.runPythonAsync(
@@ -463,12 +380,12 @@
             file_content = js.document.getElementById('fileContent').textContent 
             div = js.document.createElement("result")
 
-            with open("uvlfile.uvl", "w") as text_file:
+            with open("csvfile.csv", "w") as text_file:
                 print(file_content, file=text_file)
 
             from flamapy.interfaces.python.FLAMAFeatureModel import FLAMAFeatureModel
 
-            fm = FLAMAFeatureModel("uvlfile.uvl")
+            fm = FLAMAFeatureModel("csvfile.csv")
             result=fm.valid()
 
             div.innerHTML = "<div id='deleteme'>"+str(result)+"</div>"

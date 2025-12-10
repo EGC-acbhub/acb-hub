@@ -16,8 +16,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
-                            <th>Publication type</th>
-                            <th>Dataset DOI</th>
+                            <th>League/th>
                             <th>Options</th>
                         </tr>
                         </thead>
@@ -25,16 +24,14 @@
                         {% for dataset in datasets %}
                             <tr>
                                 <td>
-                                    <a href="{{ dataset.get_uvlhub_doi() }}">
+                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
                                         {{ dataset.ds_meta_data.title }}
                                     </a>
                                 </td>
                                 <td>{{ dataset.ds_meta_data.description }}</td>
-                                <td>{{ dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
-                                <td><a href="{{ dataset.get_uvlhub_doi() }}"
-                                       target="_blank">{{ dataset.get_uvlhub_doi() }}</a></td>
+                                <td>{{ dataset.ds_meta_data.league.name.replace('_', ' ').title() }}</td>
                                 <td>
-                                    <a href="{{ dataset.get_uvlhub_doi() }}">
+                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
                                         <i data-feather="eye"></i>
                                     </a>
                                     <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
@@ -83,7 +80,7 @@
                                 <tr>
                                     <th>Title</th>
                                     <th>Description</th>
-                                    <th>Publication type</th>
+                                    <th>League</th>
                                     <th>Options</th>
                                 </tr>
                                 </thead>
@@ -96,7 +93,7 @@
                                             </a>
                                         </td>
                                         <td>{{ local_dataset.ds_meta_data.description }}</td>
-                                        <td>{{ local_dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
+                                        <td>{{ local_dataset.ds_meta_data.league.name.replace('_', ' ').title() }}</td>
                                         <td>
                                             <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=local_dataset.id) }}">
                                                 <i data-feather="eye"></i>

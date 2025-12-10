@@ -7,7 +7,7 @@ from flask import Response, jsonify
 from flask_login import current_user
 
 from app.modules.dataset.models import DataSet
-from app.modules.featuremodel.models import FeatureModel
+from app.modules.basketmodel.models import BasketModel
 from app.modules.zenodo.repositories import ZenodoRepository
 from core.configuration.configuration import uploads_folder_name
 from core.services.BaseService import BaseService
@@ -142,27 +142,25 @@ class ZenodoService(BaseService):
         """
 
         logger.info("Dataset sending to Zenodo...")
-        logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
+        logger.info(f"League...{dataset.ds_meta_data.league.value}")
 
         metadata = {
             "title": dataset.ds_meta_data.title,
-            "upload_type": "dataset" if dataset.ds_meta_data.publication_type.value == "none" else "publication",
-            "publication_type": (
-                dataset.ds_meta_data.publication_type.value
-                if dataset.ds_meta_data.publication_type.value != "none"
+            "upload_type": "dataset",
+            "league": (
+                dataset.ds_meta_data.league.value
+                if dataset.ds_meta_data.league.value != "none"
                 else None
             ),
             "description": dataset.ds_meta_data.description,
             "creators": [
                 {
-                    "name": author.name,
-                    **({"affiliation": author.affiliation} if author.affiliation else {}),
-                    **({"orcid": author.orcid} if author.orcid else {}),
+                    "name": f"{dataset.user.profile.surname}, {dataset.user.profile.name}",
+                    "affiliation": dataset.user.profile.affiliation or "ACB Hub User"
                 }
-                for author in dataset.ds_meta_data.authors
             ],
             "keywords": (
-                ["uvlhub"] if not dataset.ds_meta_data.tags else dataset.ds_meta_data.tags.split(", ") + ["uvlhub"]
+                ["acbhub"] if not dataset.ds_meta_data.tags else dataset.ds_meta_data.tags.split(", ") + ["acbhub"]
             ),
             "access_right": "open",
             "license": "CC-BY-4.0",
@@ -176,22 +174,25 @@ class ZenodoService(BaseService):
             raise Exception(error_message)
         return response.json()
 
-    def upload_file(self, dataset: DataSet, deposition_id: int, feature_model: FeatureModel, user=None) -> dict:
+    def upload_file(self, dataset: DataSet, deposition_id: int, basket_model: BasketModel, user=None) -> dict:
         """
         Upload a file to a deposition in Zenodo.
 
         Args:
             deposition_id (int): The ID of the deposition in Zenodo.
-            feature_model (FeatureModel): The FeatureModel object representing the feature model.
-            user (FeatureModel): The User object representing the file owner.
+            basket_model (BasketModel): The BasketModel object representing the basket model.
+            user (BasketModel): The User object representing the file owner.
 
         Returns:
             dict: The response in JSON format with the details of the uploaded file.
         """
-        uvl_filename = feature_model.fm_meta_data.uvl_filename
-        data = {"name": uvl_filename}
+        # basket model metadata attribute renamed to csv_filename
+        csv_filename = basket_model.bm_meta_data.csv_filename
+        data = {"name": csv_filename}
         user_id = current_user.id if user is None else user.id
-        file_path = os.path.join(uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", uvl_filename)
+        file_path = os.path.join(
+            uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", csv_filename
+        )
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"

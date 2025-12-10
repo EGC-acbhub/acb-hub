@@ -1,19 +1,13 @@
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 
 from flask_login import current_user
 from sqlalchemy import desc, func
 
-from app.modules.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
+from app.modules.dataset.models import DataSet, DSDownloadRecord, DSMetaData, DSViewRecord
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
-
-
-class AuthorRepository(BaseRepository):
-    def __init__(self):
-        super().__init__(Author)
 
 
 class DSDownloadRecordRepository(BaseRepository):
@@ -28,9 +22,6 @@ class DSDownloadRecordRepository(BaseRepository):
 class DSMetaDataRepository(BaseRepository):
     def __init__(self):
         super().__init__(DSMetaData)
-
-    def filter_by_doi(self, doi: str) -> Optional[DSMetaData]:
-        return self.model.query.filter_by(dataset_doi=doi).first()
 
 
 class DSViewRecordRepository(BaseRepository):
@@ -61,10 +52,13 @@ class DataSetRepository(BaseRepository):
     def __init__(self):
         super().__init__(DataSet)
 
+    def get_by_id(self, dataset_id: int) -> DataSet:
+        return self.model.query.get(dataset_id)
+
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None))
+            .filter(DataSet.user_id == current_user_id, DSMetaData.deposition_id.isnot(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
@@ -72,7 +66,7 @@ class DataSetRepository(BaseRepository):
     def get_unsynchronized(self, current_user_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None))
+            .filter(DataSet.user_id == current_user_id, DSMetaData.deposition_id.is_(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
@@ -80,29 +74,22 @@ class DataSetRepository(BaseRepository):
     def get_unsynchronized_dataset(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DataSet.id == dataset_id, DSMetaData.dataset_doi.is_(None))
+            .filter(DataSet.user_id == current_user_id, DataSet.id == dataset_id, DSMetaData.deposition_id.is_(None))
             .first()
         )
 
     def count_synchronized_datasets(self):
-        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
+        return self.model.query.join(DSMetaData).filter(DSMetaData.deposition_id.isnot(None)).count()
 
     def count_unsynchronized_datasets(self):
-        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.is_(None)).count()
+        return self.model.query.join(DSMetaData).filter(DSMetaData.deposition_id.is_(None)).count()
 
     def latest_synchronized(self):
         return (
             self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
+            .filter(DSMetaData.deposition_id.isnot(None))
             .order_by(desc(self.model.id))
             .limit(5)
             .all()
         )
 
-
-class DOIMappingRepository(BaseRepository):
-    def __init__(self):
-        super().__init__(DOIMapping)
-
-    def get_new_doi(self, old_doi: str) -> str:
-        return self.model.query.filter_by(dataset_doi_old=old_doi).first()

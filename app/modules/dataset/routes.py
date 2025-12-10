@@ -11,11 +11,9 @@ from flask import (
     abort,
     jsonify,
     make_response,
-    redirect,
     render_template,
     request,
     send_from_directory,
-    url_for,
 )
 from flask_login import current_user, login_required
 
@@ -23,9 +21,7 @@ from app.modules.dataset import dataset_bp
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DSDownloadRecord
 from app.modules.dataset.services import (
-    AuthorService,
     DataSetService,
-    DOIMappingService,
     DSDownloadRecordService,
     DSMetaDataService,
     DSViewRecordService,
@@ -36,10 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 dataset_service = DataSetService()
-author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
-doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 
 
@@ -87,9 +81,6 @@ def create_dataset():
                 # publish deposition
                 zenodo_service.publish_deposition(deposition_id)
 
-                # update DOI
-                deposition_doi = zenodo_service.get_doi(deposition_id)
-                dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
             except Exception as e:
                 msg = f"it has not been possible upload feature models in Zenodo and update the DOI: {e}"
                 return jsonify({"message": msg}), 200
@@ -121,8 +112,9 @@ def upload():
     file = request.files["file"]
     temp_folder = current_user.temp_folder()
 
-    if not file or not file.filename.endswith(".uvl"):
-        return jsonify({"message": "No valid file"}), 400
+    # Accept only CSV files
+    if not file or not file.filename.lower().endswith(".csv"):
+        return jsonify({"message": "No valid file - only .csv files are accepted"}), 400
 
     # create temp folder
     if not os.path.exists(temp_folder):
@@ -149,7 +141,7 @@ def upload():
     return (
         jsonify(
             {
-                "message": "UVL uploaded and validated successfully",
+                "message": "CSV uploaded successfully",
                 "filename": new_filename,
             }
         ),
@@ -232,31 +224,6 @@ def download_dataset(dataset_id):
     return resp
 
 
-@dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
-def subdomain_index(doi):
-    # Check if the DOI is an old DOI
-    new_doi = doi_mapping_service.get_new_doi(doi)
-    if new_doi:
-        # Redirect to the same path with the new DOI
-        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
-
-    # Try to search the dataset by the provided DOI (which should already be the new one)
-    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
-
-    if not ds_meta_data:
-        abort(404)
-
-    # Get dataset
-    dataset = ds_meta_data.data_set
-
-    # Save the cookie to the user's browser
-    user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
-    resp.set_cookie("view_cookie", user_cookie)
-
-    return resp
-
-
 @dataset_bp.route("/dataset/unsynchronized/<int:dataset_id>/", methods=["GET"])
 @login_required
 def get_unsynchronized_dataset(dataset_id):
@@ -265,5 +232,23 @@ def get_unsynchronized_dataset(dataset_id):
 
     if not dataset:
         abort(404)
+
+    return render_template("dataset/view_dataset.html", dataset=dataset)
+
+
+@dataset_bp.route("/dataset/view/<int:dataset_id>", methods=["GET"])
+@login_required
+def view_dataset(dataset_id):
+    dataset = dataset_service.get_by_id(dataset_id)
+
+    if not dataset:
+        abort(404)
+
+    # CAMBIO: Permitir acceso si eres el dueño O si el dataset es público (tiene deposition_id)
+    is_owner = dataset.user_id == current_user.id
+    is_public = dataset.ds_meta_data.deposition_id is not None
+
+    if not is_owner and not is_public:
+        abort(403)
 
     return render_template("dataset/view_dataset.html", dataset=dataset)

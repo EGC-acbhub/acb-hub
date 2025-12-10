@@ -1,5 +1,4 @@
 var currentId = 0;
-        var amount_authors = 0;
 
         function show_upload_dataset() {
             document.getElementById("upload_dataset").style.display = "block";
@@ -9,53 +8,6 @@ var currentId = 0;
             return currentId++;
         }
 
-        function addField(newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') {
-            let fieldWrapper = document.createElement('div');
-            fieldWrapper.className = className;
-
-            let label = document.createElement('label');
-            label.className = 'form-label';
-            label.for = name;
-            label.textContent = text;
-
-            let field = document.createElement('input');
-            field.name = name;
-            field.className = 'form-control';
-
-            fieldWrapper.appendChild(label);
-            fieldWrapper.appendChild(field);
-            newAuthor.appendChild(fieldWrapper);
-        }
-
-        function addRemoveButton(newAuthor) {
-            let buttonWrapper = document.createElement('div');
-            buttonWrapper.className = 'col-12 mb-2';
-
-            let button = document.createElement('button');
-            button.textContent = 'Remove author';
-            button.className = 'btn btn-danger btn-sm';
-            button.type = 'button';
-            button.addEventListener('click', function (event) {
-                event.preventDefault();
-                newAuthor.remove();
-            });
-
-            buttonWrapper.appendChild(button);
-            newAuthor.appendChild(buttonWrapper);
-        }
-
-        function createAuthorBlock(idx, suffix) {
-            let newAuthor = document.createElement('div');
-            newAuthor.className = 'author row';
-            newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white";
-
-            addField(newAuthor, `${suffix}authors-${idx}-name`, 'Name *');
-            addField(newAuthor, `${suffix}authors-${idx}-affiliation`, 'Affiliation');
-            addField(newAuthor, `${suffix}authors-${idx}-orcid`, 'ORCID');
-            addRemoveButton(newAuthor);
-
-            return newAuthor;
-        }
 
         function check_title_and_description() {
             let titleInput = document.querySelector('input[name="title"]');
@@ -81,26 +33,6 @@ var currentId = 0;
             return (titleLength >= 3 && descriptionLength >= 3);
         }
 
-
-        document.getElementById('add_author').addEventListener('click', function () {
-            let authors = document.getElementById('authors');
-            let newAuthor = createAuthorBlock(amount_authors++, "");
-            authors.appendChild(newAuthor);
-        });
-
-
-        document.addEventListener('click', function (event) {
-            if (event.target && event.target.classList.contains('add_author_to_uvl')) {
-
-                let authorsButtonId = event.target.id;
-                let authorsId = authorsButtonId.replace("_button", "");
-                let authors = document.getElementById(authorsId);
-                let id = authorsId.replace("_form_authors", "")
-                let newAuthor = createAuthorBlock(amount_authors, `feature_models-${id}-`);
-                authors.appendChild(newAuthor);
-
-            }
-        });
 
         function show_loading() {
             document.getElementById("upload_button").style.display = "none";
@@ -169,32 +101,7 @@ var currentId = 0;
                     }
 
                     let checked_orcid = true;
-                    if (Array.isArray(formData.author_orcid)) {
-                        for (let orcid of formData.author_orcid) {
-                            orcid = orcid.trim();
-                            if (orcid !== '' && !isValidOrcid(orcid)) {
-                                hide_loading();
-                                write_upload_error("ORCID value does not conform to valid format: " + orcid);
-                                checked_orcid = false;
-                                break;
-                            }
-                        }
-                    }
-
-
                     let checked_name = true;
-                    if (Array.isArray(formData.author_name)) {
-                        for (let name of formData.author_name) {
-                            name = name.trim();
-                            if (name === '') {
-                                hide_loading();
-                                write_upload_error("The author's name cannot be empty");
-                                checked_name = false;
-                                break;
-                            }
-                        }
-                    }
-
 
                     if (checked_orcid && checked_name) {
                         fetch('/dataset/upload', {
