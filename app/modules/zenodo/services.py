@@ -147,16 +147,12 @@ class ZenodoService(BaseService):
         metadata = {
             "title": dataset.ds_meta_data.title,
             "upload_type": "dataset",
-            "league": (
-                dataset.ds_meta_data.league.value
-                if dataset.ds_meta_data.league.value != "none"
-                else None
-            ),
+            "league": (dataset.ds_meta_data.league.value if dataset.ds_meta_data.league.value != "none" else None),
             "description": dataset.ds_meta_data.description,
             "creators": [
                 {
                     "name": f"{dataset.user.profile.surname}, {dataset.user.profile.name}",
-                    "affiliation": dataset.user.profile.affiliation or "ACB Hub User"
+                    "affiliation": dataset.user.profile.affiliation or "ACB Hub User",
                 }
             ],
             "keywords": (
@@ -190,9 +186,7 @@ class ZenodoService(BaseService):
         csv_filename = basket_model.bm_meta_data.csv_filename
         data = {"name": csv_filename}
         user_id = current_user.id if user is None else user.id
-        file_path = os.path.join(
-            uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", csv_filename
-        )
+        file_path = os.path.join(uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", csv_filename)
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
