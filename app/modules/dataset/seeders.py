@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 from app.modules.auth.models import User
-from app.modules.dataset.models import DataSet, DSMetaData, DSMetrics, League
 from app.modules.basketmodel.models import BasketModel, BMMetaData
+from app.modules.dataset.models import DataSet, DSMetaData, DSMetrics, League
 from app.modules.hubfile.models import Hubfile
 from core.seeders.BaseSeeder import BaseSeeder
 

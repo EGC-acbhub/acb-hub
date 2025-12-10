@@ -3,8 +3,8 @@ import re
 import unidecode
 from sqlalchemy import any_, or_
 
-from app.modules.dataset.models import DataSet, DSMetaData, League
 from app.modules.basketmodel.models import BasketModel, BMMetaData
+from app.modules.dataset.models import DataSet, DSMetaData, League
 from core.repositories.BaseRepository import BaseRepository
 
 

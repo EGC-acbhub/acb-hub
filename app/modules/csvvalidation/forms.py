@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class CsvvalidationForm(FlaskForm):
-    submit = SubmitField('Save csvvalidation')
+    submit = SubmitField("Save csvvalidation")

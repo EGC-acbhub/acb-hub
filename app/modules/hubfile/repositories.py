@@ -2,8 +2,8 @@ from sqlalchemy import func
 
 from app import db
 from app.modules.auth.models import User
-from app.modules.dataset.models import DataSet
 from app.modules.basketmodel.models import BasketModel
+from app.modules.dataset.models import DataSet
 from app.modules.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
 from core.repositories.BaseRepository import BaseRepository
 

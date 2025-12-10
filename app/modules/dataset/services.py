@@ -7,6 +7,7 @@ import uuid
 from flask import request
 
 from app.modules.auth.services import AuthenticationService
+from app.modules.basketmodel.repositories import BasketModelRepository, BMMetaDataRepository
 from app.modules.dataset.models import DataSet, DSViewRecord
 from app.modules.dataset.repositories import (
     DataSetRepository,
@@ -14,7 +15,6 @@ from app.modules.dataset.repositories import (
     DSMetaDataRepository,
     DSViewRecordRepository,
 )
-from app.modules.basketmodel.repositories import BasketModelRepository, BMMetaDataRepository
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
@@ -120,7 +120,7 @@ class DataSetService(BaseService):
 
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
-    
+
 
 class DSDownloadRecordService(BaseService):
     def __init__(self):

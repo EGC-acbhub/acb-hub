@@ -71,7 +71,7 @@ class DataSet(db.Model):
         from app.modules.dataset.services import SizeService
 
         return SizeService().get_human_readable_size(self.get_file_total_size())
-    
+
     def to_dict(self):
         return {
             "title": self.ds_meta_data.title,
