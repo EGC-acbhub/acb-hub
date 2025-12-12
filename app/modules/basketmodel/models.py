@@ -8,8 +8,8 @@ class BasketModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_set_id = db.Column(db.Integer, db.ForeignKey("data_set.id"), nullable=False)
     bm_meta_data_id = db.Column(db.Integer, db.ForeignKey("bm_meta_data.id"))
-    files = db.relationship("Hubfile", backref="feature_model", lazy=True, cascade="all, delete")
-    bm_meta_data = db.relationship("BMMetaData", uselist=False, backref="feature_model", cascade="all, delete")
+    files = db.relationship("Hubfile", backref="basket_model", lazy=True, cascade="all, delete")
+    bm_meta_data = db.relationship("BMMetaData", uselist=False, backref="basket_model", cascade="all, delete")
 
     def __repr__(self):
         return f"BasketModel<{self.id}>"
