@@ -1,4 +1,5 @@
 import pytest
+from flask import url_for
 
 from app import db
 from app.modules.auth.models import User
@@ -34,5 +35,26 @@ def test_edit_profile_page_get(test_client):
     response = test_client.get("/profile/edit")
     assert response.status_code == 200, "The profile editing page could not be accessed."
     assert b"Edit profile" in response.data, "The expected content is not present on the page"
+
+    logout(test_client)
+
+
+def test_edit_profile_page_save(test_client):
+    """
+    Tests saving the profile editing page via a GET request.
+    """
+    login_response = login(test_client, "user@example.com", "test1234")
+    assert login_response.status_code == 200, "Login was unsuccessful."
+
+    response = test_client.post(
+        "/profile/edit",
+        data={
+            "name": "New Name",
+            "surname": "New Surname",
+        },
+    )
+
+    assert response.status_code == 302, "The profile could not be saved."
+    assert response.request.path == url_for("profile.edit_profile")
 
     logout(test_client)
