@@ -7,24 +7,24 @@ from app.modules.fakenodo.services import FakenodoService
 fakenodo_service = FakenodoService()
 
 
-@fakenodo_bp.route('/fakenodo', methods=['GET'])
+@fakenodo_bp.route("/fakenodo", methods=["GET"])
 def index():
     return jsonify({"message": "Fakenodo API is running", "status": "ok"})
 
 
-@fakenodo_bp.route('/api/deposit/depositions', methods=['POST'])
+@fakenodo_bp.route("/api/deposit/depositions", methods=["POST"])
 def create_deposition():
     """Create a new deposition."""
     try:
         data = request.get_json()
-        if not data or 'metadata' not in data:
+        if not data or "metadata" not in data:
             raise BadRequest("Missing metadata")
 
-        metadata = data['metadata']
+        metadata = data["metadata"]
         deposition = fakenodo_service.create_deposition(metadata)
 
         response = deposition.to_dict()
-        response['files'] = []  # New depositions have no files yet
+        response["files"] = []  # New depositions have no files yet
 
         return jsonify(response), 201
 
@@ -32,14 +32,14 @@ def create_deposition():
         return jsonify({"message": str(e), "status": "error"}), 400
 
 
-@fakenodo_bp.route('/api/deposit/depositions/<int:deposition_id>/files', methods=['POST'])
+@fakenodo_bp.route("/api/deposit/depositions/<int:deposition_id>/files", methods=["POST"])
 def upload_file(deposition_id):
     """Upload a file to a deposition."""
     try:
-        if 'file' not in request.files:
+        if "file" not in request.files:
             raise BadRequest("No file provided")
 
-        file = request.files['file']
+        file = request.files["file"]
         if not file.filename:
             raise BadRequest("No filename provided")
 
@@ -65,7 +65,7 @@ def upload_file(deposition_id):
         return jsonify({"message": str(e), "status": "error"}), 400
 
 
-@fakenodo_bp.route('/api/deposit/depositions/<int:deposition_id>/actions/publish', methods=['POST'])
+@fakenodo_bp.route("/api/deposit/depositions/<int:deposition_id>/actions/publish", methods=["POST"])
 def publish_deposition(deposition_id):
     """Publish a deposition."""
     try:
@@ -73,8 +73,8 @@ def publish_deposition(deposition_id):
 
         response = deposition.to_dict()
         # Populate files for the response
-        files = fakenodo_service.get_deposition(deposition_id)['files']
-        response['files'] = files
+        files = fakenodo_service.get_deposition(deposition_id)["files"]
+        response["files"] = files
 
         return jsonify(response), 202
 
@@ -84,7 +84,7 @@ def publish_deposition(deposition_id):
         return jsonify({"message": str(e), "status": "error"}), 400
 
 
-@fakenodo_bp.route('/api/deposit/depositions/<int:deposition_id>', methods=['GET'])
+@fakenodo_bp.route("/api/deposit/depositions/<int:deposition_id>", methods=["GET"])
 def get_deposition(deposition_id):
     """Get deposition details."""
     try:
@@ -97,7 +97,7 @@ def get_deposition(deposition_id):
         return jsonify({"message": str(e), "status": "error"}), 500
 
 
-@fakenodo_bp.route('/api/deposit/depositions', methods=['GET'])
+@fakenodo_bp.route("/api/deposit/depositions", methods=["GET"])
 def list_depositions():
     """List all depositions."""
     try:
