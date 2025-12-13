@@ -17,6 +17,18 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
+def get_zenodo_service():
+    """Factory function that returns the appropriate Zenodo service based on environment."""
+    # Default to FakenodoService unless explicitly disabled
+    use_fakenodo = os.getenv("USE_FAKENODO", "true").lower() != "false"
+    if use_fakenodo:
+        from app.modules.fakenodo.services import FakenodoService
+
+        return FakenodoService()
+    else:
+        return ZenodoService()
+
+
 class ZenodoService(BaseService):
     def get_zenodo_url(self):
         FLASK_ENV = os.getenv("FLASK_ENV", "development")

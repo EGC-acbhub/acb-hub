@@ -26,14 +26,14 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
 )
-from app.modules.zenodo.services import ZenodoService
+from app.modules.zenodo.services import get_zenodo_service
 
 logger = logging.getLogger(__name__)
 
 
 dataset_service = DataSetService()
 dsmetadata_service = DSMetaDataService()
-zenodo_service = ZenodoService()
+zenodo_service = get_zenodo_service()
 ds_view_record_service = DSViewRecordService()
 
 

@@ -79,7 +79,7 @@ class DataSet(db.Model):
             "created_at": self.created_at,
             "created_at_timestamp": int(self.created_at.timestamp()),
             "description": self.ds_meta_data.description,
-            "league": self.get_cleaned_publication_type(),
+            "league": self.get_cleaned_league(),
             "tags": self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
             "download": f"{request.host_url.rstrip('/')}/dataset/download/{self.id}",
             "zenodo": self.get_zenodo_url(),
