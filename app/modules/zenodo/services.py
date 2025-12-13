@@ -8,6 +8,7 @@ from flask_login import current_user
 
 from app.modules.basketmodel.models import BasketModel
 from app.modules.dataset.models import DataSet
+from app.modules.fakenodo.services import FakenodoService
 from app.modules.zenodo.repositories import ZenodoRepository
 from core.configuration.configuration import uploads_folder_name
 from core.services.BaseService import BaseService
@@ -22,8 +23,6 @@ def get_zenodo_service():
     # Default to FakenodoService unless explicitly disabled
     use_fakenodo = os.getenv("USE_FAKENODO", "true").lower() != "false"
     if use_fakenodo:
-        from app.modules.fakenodo.services import FakenodoService
-
         return FakenodoService()
     else:
         return ZenodoService()
