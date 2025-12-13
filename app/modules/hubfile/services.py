@@ -2,6 +2,7 @@ import os
 
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
+from app.modules.dataset.repositories import DataSetRepository
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
@@ -14,6 +15,7 @@ from core.services.BaseService import BaseService
 class HubfileService(BaseService):
     def __init__(self):
         super().__init__(HubfileRepository())
+        self.dataset_repository = DataSetRepository()
         self.hubfile_view_record_repository = HubfileViewRecordRepository()
         self.hubfile_download_record_repository = HubfileDownloadRecordRepository()
 
@@ -40,6 +42,10 @@ class HubfileService(BaseService):
     def total_hubfile_downloads(self) -> int:
         hubfile_download_record_repository = HubfileDownloadRecordRepository()
         return hubfile_download_record_repository.total_hubfile_downloads()
+
+    def add_dataset_download(self, hubfile: Hubfile):
+        dataset = hubfile.get_dataset()
+        self.dataset_repository.add_download(dataset.id)
 
 
 class HubfileDownloadRecordService(BaseService):

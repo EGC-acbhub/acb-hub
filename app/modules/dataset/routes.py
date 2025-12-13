@@ -221,6 +221,9 @@ def download_dataset(dataset_id):
             download_cookie=user_cookie,
         )
 
+    # Count download
+    dataset_service.add_download(dataset.id)
+
     return resp
 
 

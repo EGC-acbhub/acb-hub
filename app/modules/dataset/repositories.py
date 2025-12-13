@@ -92,3 +92,6 @@ class DataSetRepository(BaseRepository):
             .limit(5)
             .all()
         )
+
+    def add_download(self, dataset_id: int):
+        self.update(dataset_id, download_count=DataSet.download_count + 1)

@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import Enum
 
 from flask import request
-from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import Enum as SQLAlchemyEnum, Integer
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
 
@@ -44,6 +45,8 @@ class DataSet(db.Model):
 
     ds_meta_data = db.relationship("DSMetaData", backref=db.backref("data_set", uselist=False))
     basket_models = db.relationship("BasketModel", backref="data_set", lazy=True, cascade="all, delete")
+
+    download_count: Mapped[int] = mapped_column(Integer, default=0)
 
     def name(self):
         return self.ds_meta_data.title

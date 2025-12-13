@@ -121,6 +121,9 @@ class DataSetService(BaseService):
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
 
+    def add_download(self, dataset_id: int):
+        self.repository.add_download(dataset_id)
+
 
 class DSDownloadRecordService(BaseService):
     def __init__(self):

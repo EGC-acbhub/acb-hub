@@ -10,11 +10,16 @@ from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.models import HubfileDownloadRecord, HubfileViewRecord
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
 
+hubfile_service = HubfileService()
+
 
 @hubfile_bp.route("/file/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
-    file = HubfileService().get_or_404(file_id)
+    file = hubfile_service.get_or_404(file_id)
     filename = file.name
+
+    # Count download
+    hubfile_service.add_dataset_download(file)
 
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
     parent_directory_path = os.path.dirname(current_app.root_path)
@@ -48,7 +53,7 @@ def download_file(file_id):
 
 @hubfile_bp.route("/file/view/<int:file_id>", methods=["GET"])
 def view_file(file_id):
-    file = HubfileService().get_or_404(file_id)
+    file = hubfile_service.get_or_404(file_id)
     filename = file.name
 
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
