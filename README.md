@@ -1,11 +1,15 @@
-<div style="text-align: center;">
-  <img src="https://www.acbhub.io/static/img/logos/logo-light.svg" alt="Logo">
-</div>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="app/static/img/logos/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="app/static/img/logos/logo-light.svg">
+  <img alt="Logo" src="app/static/img/logos/logo-light.svg">
+</picture>
 
-# acbhub.io
+# acb-hub
 
-Repository of feature models in CSV format integrated with Zenodo and flamapy following Open Science principles - Developed by DiversoLab
+Repositorio de resultados sobre la liga ACB en formato CSV.
 
-## Official documentation
+## Enlaces
 
-You can consult the official documentation of the project at [docs.acbhub.io](https://docs.acbhub.io/)
+- [Aplicación desplegada](https://acbhub.koyeb.app/)
+- [Issues](https://github.com/EGC-acbhub/acb-hub/issues)
+- [Tablero de tareas](https://github.com/orgs/EGC-acbhub/projects/1)
