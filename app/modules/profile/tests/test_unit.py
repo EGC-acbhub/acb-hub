@@ -41,7 +41,7 @@ def test_edit_profile_page_get(test_client):
 
 def test_edit_profile_page_save(test_client):
     """
-    Tests saving the profile editing page via a GET request.
+    Tests saving the profile editing page via a POST request.
     """
     login_response = login(test_client, "user@example.com", "test1234")
     assert login_response.status_code == 200, "Login was unsuccessful."
@@ -52,9 +52,11 @@ def test_edit_profile_page_save(test_client):
             "name": "New Name",
             "surname": "New Surname",
         },
+        follow_redirects=True,
     )
 
-    assert response.status_code == 302, "The profile could not be saved."
+    assert response.status_code == 200, "The profile could not be saved."
     assert response.request.path == url_for("profile.edit_profile")
+    assert b"Profile updated successfully" in response.data, "The expected content is not present on the page"
 
     logout(test_client)
