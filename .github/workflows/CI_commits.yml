@@ -15,10 +15,12 @@ on:
 jobs:
   check:
     name: Conventional Commits
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
 
     steps:
       
       # Step to validate commit messages following the Conventional Commits standard
       - name: Validate commit messages
         uses: webiny/action-conventional-commits@v1.3.0
+        with:
+          allowed-commit-types: 'build,ci,cd,docs,feat,fix,perf,refactor,style,test'
