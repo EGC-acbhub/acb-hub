@@ -10,6 +10,7 @@ dataset_fields = {
     "created": "created_at",
     "name": "name",
     "files": "files",
+    "downloads": "download_count",
 }
 
 dataset_serializer = Serializer(dataset_fields, related_serializers={"files": file_serializer})
