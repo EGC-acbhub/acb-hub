@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import Enum
 
 from flask import request
-from sqlalchemy import Enum as SQLAlchemyEnum, Integer
+from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
