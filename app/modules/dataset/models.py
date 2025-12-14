@@ -81,7 +81,7 @@ class DataSet(db.Model):
         return SizeService().get_human_readable_size(self.get_file_total_size())
 
     def get_downloads_badge_url(self):
-        downloads = f"1 download" if self.download_count == 1 else f"{self.download_count} downloads"
+        downloads = "1 download" if self.download_count == 1 else f"{self.download_count} downloads"
         downloads = quote(downloads, safe="")
         name = quote(self.name().replace("-", "--").replace("_", "__"), safe="")
         return f"https://img.shields.io/badge/{name}-{downloads}-blue"
