@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from urllib.parse import quote
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -62,6 +63,9 @@ class DataSet(db.Model):
     def get_cleaned_league(self):
         return self.ds_meta_data.league.name.replace("_", " ").title()
 
+    def get_url(self):
+        return f"{request.host_url.rstrip('/')}/dataset/view/{self.id}"
+
     def get_zenodo_url(self):
         return f"https://zenodo.org/record/{self.ds_meta_data.deposition_id}" if self.ds_meta_data.dataset_doi else None
 
@@ -75,6 +79,12 @@ class DataSet(db.Model):
         from app.modules.dataset.services import SizeService
 
         return SizeService().get_human_readable_size(self.get_file_total_size())
+
+    def get_downloads_badge_url(self):
+        downloads = f"1 download" if self.download_count == 1 else f"{self.download_count} downloads"
+        downloads = quote(downloads, safe="")
+        name = quote(self.name().replace("-", "--").replace("_", "__"), safe="")
+        return f"https://img.shields.io/badge/{name}-{downloads}-blue"
 
     def to_dict(self):
         return {
