@@ -101,7 +101,7 @@ class DataSetService(BaseService):
                 bmmetadata = self.bmmetadata_repository.create(commit=False, **basket_model.get_bmmetadata())
                 bm = self.basket_model_repository.create(
                     commit=False, data_set_id=dataset.id, bm_meta_data_id=bmmetadata.id
-                    )
+                )
 
                 # associated files in basket model
                 file_path = os.path.join(current_user.temp_folder(), csv_filename)
@@ -109,7 +109,7 @@ class DataSetService(BaseService):
 
                 file = self.hubfilerepository.create(
                     commit=False, name=csv_filename, checksum=checksum, size=size, basket_model_id=bm.id
-                    )
+                )
 
                 bm.files.append(file)
             self.repository.session.commit()

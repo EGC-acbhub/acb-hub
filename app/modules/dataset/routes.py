@@ -103,7 +103,6 @@ def update_dataset(dataset_id):
     dataset = dataset_service.get_by_id(dataset_id)
 
     if request.method == "POST":
-
         if not form.validate_on_submit():
             return jsonify({"message": form.errors}), 400
 
