@@ -56,8 +56,6 @@ def test_dataset_has_badge(test_client):
 
     response = test_client.get("/dataset/view/2")
     assert response.status_code == 200, "The dataset view could not be accessed."
-    assert (
-        b"https://img.shields.io/badge/Sample%20dataset%202-0%20downloads-blue" in response.data
-    ), "The expected content is not present on the page"
+    assert b"https://img.shields.io/badge/Sample%20dataset%202-0%20downloads-blue" in response.data
 
     logout(test_client)
