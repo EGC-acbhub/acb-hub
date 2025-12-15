@@ -45,3 +45,19 @@ def test_download_dataset(test_client):
     assert response.content_type == "application/zip", "The response does not have the expected content type"
 
     logout(test_client)
+
+
+def test_dataset_has_badge(test_client):
+    """
+    Tests access to the dataset page via a GET request.
+    """
+    login_response = login(test_client, "user1@example.com", "1234")
+    assert login_response.status_code == 200, "Login was unsuccessful."
+
+    response = test_client.get("/dataset/view/2")
+    assert response.status_code == 200, "The dataset view could not be accessed."
+    assert (
+        b"https://img.shields.io/badge/Sample%20dataset%202-0%20downloads-blue" in response.data
+    ), "The expected content is not present on the page"
+
+    logout(test_client)
