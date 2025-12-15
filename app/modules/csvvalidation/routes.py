@@ -42,15 +42,15 @@ def check_csv(file_id):
         with open(file_path, newline="", encoding="utf-8") as csvfile:
             # 1. Leemos una muestra
             sample = csvfile.read(1024)
-            
+
             # 2. Intentamos detectar el formato (punto y coma, comas, etc.)
             try:
                 dialect = csv.Sniffer().sniff(sample)
             except csv.Error:
-                # SI FALLA (porque es una sola columna o muy pequeño), 
+                # SI FALLA (porque es una sola columna o muy pequeño),
                 # forzamos el estándar de Excel (separado por comas)
                 dialect = csv.excel
-            
+
             # 3. Volvemos al inicio del archivo
             csvfile.seek(0)
 
