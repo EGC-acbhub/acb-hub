@@ -2,7 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Optional
 
-from app.modules.dataset.models import League
+from app.modules.basketmodel.models import BasketModel
+from app.modules.dataset.models import DataSet, League
 
 
 class AuthorForm(FlaskForm):
@@ -40,6 +41,14 @@ class BasketModelForm(FlaskForm):
             "csv_version": self.version.data,
         }
 
+    def set_bmmetadata(self, basket_model: BasketModel):
+        self.csv_filename.data = basket_model.bm_meta_data.csv_filename
+        self.title.data = basket_model.bm_meta_data.title
+        self.desc.data = basket_model.bm_meta_data.description
+        self.league.data = basket_model.bm_meta_data.league.value
+        self.tags.data = basket_model.bm_meta_data.tags
+        self.version.data = basket_model.bm_meta_data.csv_version
+
 
 class DataSetForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
@@ -63,6 +72,19 @@ class DataSetForm(FlaskForm):
             "league": league_converted,
             "tags": self.tags.data,
         }
+
+    def set_dsmetadata(self, dataset: DataSet):
+        self.title.data = dataset.ds_meta_data.title
+        self.desc.data = dataset.ds_meta_data.description
+        self.league.data = dataset.ds_meta_data.league.value
+        self.tags.data = dataset.ds_meta_data.tags
+
+        while len(self.basket_models.entries) > 0:
+            self.basket_models.pop_entry()
+
+        for bm in dataset.basket_models:
+            new_bm_form_entry = self.basket_models.append_entry()
+            new_bm_form_entry.set_bmmetadata(bm)
 
     def convert_league(self, value):
         for league in League:

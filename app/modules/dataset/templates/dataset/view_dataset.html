@@ -27,6 +27,12 @@
         </a>
     </div>
 
+    <div class="col-6 text-end">
+        <a href="#" class="btn btn-primary btn-sm" id="edit-button" style="border-radius: 5px;">
+            <i data-feather="edit" class="center-button-icon"></i>
+            Edit
+        </a>
+    </div>
 </div>
 
 <div class="row">
@@ -321,6 +327,16 @@
 
 
 <script>
+
+    const currentPath = window.location.pathname;
+    const pathSegments = currentPath.split('/');
+    const datasetId = pathSegments[pathSegments.length - 1];
+
+    const editButton = document.getElementById('edit-button');
+    if (editButton && datasetId) {
+        editButton.href = '/dataset/update/' + datasetId;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         feather.replace();
     });

@@ -96,6 +96,33 @@ def create_dataset():
     return render_template("dataset/upload_dataset.html", form=form)
 
 
+@dataset_bp.route("/dataset/update/<int:dataset_id>", methods=["GET", "POST"])
+@login_required
+def update_dataset(dataset_id):
+    form = DataSetForm()
+    dataset = dataset_service.get_by_id(dataset_id)
+
+    if request.method == "POST":
+
+        if not form.validate_on_submit():
+            return jsonify({"message": form.errors}), 400
+
+        try:
+            logger.info("Updating dataset...")
+            dataset = dataset_service.update_dsmetadata(dataset.ds_meta_data_id, **form.get_dsmetadata())
+            logger.info(f"Updated dataset: {dataset}")
+
+            msg = "Everything works!"
+            return jsonify({"message": msg}), 200
+        except Exception as exc:
+            logger.exception(f"Exception while update dataset data in local {exc}")
+            return jsonify({"Exception while update dataset data in local: ": str(exc)}), 400
+
+    form.set_dsmetadata(dataset=dataset)
+
+    return render_template("dataset/update_dataset.html", form=form)
+
+
 @dataset_bp.route("/dataset/list", methods=["GET", "POST"])
 @login_required
 def list_dataset():
