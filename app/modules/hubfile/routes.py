@@ -21,7 +21,7 @@ def download_file(file_id):
     # Count download
     hubfile_service.add_dataset_download(file)
 
-    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    directory_path = f"uploads/user_{file.basket_model.data_set.user_id}/dataset_{file.basket_model.data_set_id}/"
     parent_directory_path = os.path.dirname(current_app.root_path)
     file_path = os.path.join(parent_directory_path, directory_path)
 
@@ -56,7 +56,7 @@ def view_file(file_id):
     file = hubfile_service.get_or_404(file_id)
     filename = file.name
 
-    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    directory_path = f"uploads/user_{file.basket_model.data_set.user_id}/dataset_{file.basket_model.data_set_id}/"
     parent_directory_path = os.path.dirname(current_app.root_path)
     file_path = os.path.join(parent_directory_path, directory_path, filename)
 

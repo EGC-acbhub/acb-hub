@@ -40,9 +40,18 @@ def check_csv(file_id):
         file_path = hubfile.get_path()
 
         with open(file_path, newline="", encoding="utf-8") as csvfile:
-            # Intentamos detectar el formato (si usa comas o punto y coma)
+            # 1. Leemos una muestra
             sample = csvfile.read(1024)
-            dialect = csv.Sniffer().sniff(sample)
+            
+            # 2. Intentamos detectar el formato (punto y coma, comas, etc.)
+            try:
+                dialect = csv.Sniffer().sniff(sample)
+            except csv.Error:
+                # SI FALLA (porque es una sola columna o muy pequeño), 
+                # forzamos el estándar de Excel (separado por comas)
+                dialect = csv.excel
+            
+            # 3. Volvemos al inicio del archivo
             csvfile.seek(0)
 
             reader = csv.DictReader(csvfile, dialect=dialect)
@@ -58,10 +67,9 @@ def check_csv(file_id):
                     {"success": False, "errors": [f"Faltan columnas obligatorias: {', '.join(missing_columns)}"]}
                 ), 400
 
-            # Validación extra: Leer la primera fila para ver si los datos tienen sentido
+            # Validación extra: Leer la primera fila para ver si hay datos
             try:
                 next(reader)
-                # Aquí podrías añadir validaciones de tipos de datos si quisieras
             except StopIteration:
                 return jsonify({"success": False, "errors": ["El archivo CSV está vacío"]}), 400
 
