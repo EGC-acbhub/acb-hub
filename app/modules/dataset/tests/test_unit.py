@@ -1,14 +1,16 @@
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.modules.auth.seeders import AuthSeeder
 from app.modules.conftest import login, logout
+from app.modules.dataset.repositories import DSChangeLogRepository
 from app.modules.dataset.seeders import DataSetSeeder
-from app.modules.dataset.services import calculate_checksum_and_size
+from app.modules.dataset.services import DataSetService, calculate_checksum_and_size
 
 
 @pytest.fixture(scope="module")
@@ -32,7 +34,11 @@ def mock_dataset():
     dataset.ds_meta_data.title = "Test Dataset"
     dataset.ds_meta_data.description = "Test description"
     dataset.ds_meta_data.tags = "tag1, tag2"
-    dataset.ds_meta_data.league = "ACB"
+
+    mock_league = MagicMock()
+    mock_league.name = "ACB"
+    mock_league.value = "acb"
+    dataset.ds_meta_data.league = mock_league
 
     user = MagicMock()
     user.profile.name = "John"
@@ -69,6 +75,34 @@ def mock_user():
     user.id = 1
     user.temp_folder.return_value = "/tmp/temp"
     return user
+
+
+@pytest.fixture
+def mock_dataset_with_bm(mock_dataset, mock_basket_model):
+    """Mock dataset with metadata and basket models for update testing."""
+    mock_bm1_league = MagicMock()
+    mock_bm1_league.value = "nba"
+    mock_bm1_league.name = "NBA"
+    # Simular la estructura de datos que set_dsmetadata() espera
+    mock_bm1 = MagicMock()
+    mock_bm1.bm_meta_data.csv_filename = "file1.csv"
+    mock_bm1.bm_meta_data.league = mock_bm1_league
+    mock_bm1.bm_meta_data.tags = "tagA"
+    # ... otros campos ...
+
+    mock_dataset.basket_models = [mock_bm1]
+
+    main_ds_league = MagicMock()
+    main_ds_league.value = "acb"
+    main_ds_league.name = "ACB"
+    # Asignar valores al metadata principal para que el form.data tenga algo que enviar
+    mock_dataset.ds_meta_data.league = main_ds_league
+    mock_dataset.ds_meta_data.title = "Old Title"
+    mock_dataset.ds_meta_data.description = "Old description"
+    mock_dataset.id = 1
+    mock_dataset.ds_meta_data_id = 1
+
+    return mock_dataset
 
 
 # ===== EXISTING INTEGRATION TESTS =====
@@ -251,3 +285,155 @@ def test_complete_dataset_workflow(mock_dataset, mock_basket_model, temp_file, t
     assert view_response.status_code == 200
 
     logout(test_client)
+
+
+# --- NUEVOS TESTS DE INTEGRACIÓN ---
+
+
+@patch('app.modules.dataset.routes.dataset_service')
+@patch('app.modules.dataset.forms.DataSet')
+def test_update_dataset_validation_passes_with_bm(mock_ds_model, mock_dataset_service, test_client, mock_dataset_with_bm):  # noqa: E501
+    """
+    Prueba que la validación del formulario de actualización pasa,
+    incluso con FieldList(BasketModelForm) presente,
+    simulando la corrección del SelectField 'league' y la lógica de set_dsmetadata.
+    """
+
+    # Simular el dataset existente (usado en la función de la vista)
+    mock_dataset_service.get_by_id.return_value = mock_dataset_with_bm
+
+    # ----------------------------------------------------
+    # Simular el envío de datos POST (datos de formulario válidos)
+    # ----------------------------------------------------
+    new_title = "New Updated Title"
+    post_data = {
+        "title": new_title,
+        "desc": "Updated description",
+        "league": "euroleague",
+        "tags": "new,tags,update",
+        # Simular los datos del BasketModel
+        "basket_models-0-csv_filename": "file1.csv",
+        "basket_models-0-title": "Model Title",
+        "basket_models-0-desc": "Model Desc",
+        "basket_models-0-league": "nba",
+        "basket_models-0-tags": "tagA",
+        "basket_models-0-version": "1.0",
+        "basket_models-0-csrf_token": "mock_token"
+    }
+
+    # Asegurar la autenticación
+    login(test_client, "user1@example.com", "1234")
+
+    # Ejecutar la solicitud POST (ESTO DEBE DEVOLVER UN OBJETO Response REAL)
+    response = test_client.post("/dataset/update/1", data=post_data)
+
+    # ----------------------------------------------------
+    # ASERCIONES Y VERIFICACIONES (Usando la corrección de aserción)
+    # ----------------------------------------------------
+
+    # Aseguramos que la aserción de 200 pasa. Si falla, mostramos el cuerpo de la respuesta real.
+    if response.status_code != 200:
+        error_info = response.data.decode('utf-8', errors='ignore')
+        # Utilizamos pytest.fail() para asegurar que el test se detiene y muestra el mensaje.
+        pytest.fail(f"La validación falló. Status: {response.status_code}. Respuesta: {error_info}")
+
+    assert response.status_code == 200, "La actualización del dataset debería haber devuelto 200 (OK)."
+
+    # 1. Verificar que se llamó al servicio de actualización de metadatos
+    mock_dataset_service.update_dsmetadata.assert_called_once()
+
+    # 2. Verificar que el servicio de log de cambios fue llamado después de la actualización exitosa
+    mock_dataset_service.create_dschangelog.assert_called_once_with(dataset=mock_dataset_with_bm)
+
+    logout(test_client)
+
+
+@patch('app.modules.dataset.routes.dataset_service')
+def test_update_dataset_creates_changelog_on_success(mock_dataset_service, test_client, mock_dataset_with_bm):
+    """
+    Prueba más simple para asegurar que el log de cambios se llama después de la validación
+    en la ruta POST /dataset/update/<id>.
+    """
+    # Configurar el mock para que la validación pase
+    mock_dataset_service.get_by_id.return_value = mock_dataset_with_bm
+
+    post_data = {
+        "title": "T",
+        "desc": "D",
+        "league": "acb",
+        "tags": "",
+        "basket_models-0-csv_filename": "file1.csv",
+        "basket_models-0-league": "nba",
+    }
+
+    login(test_client, "user1@example.com", "1234")
+
+    test_client.post("/dataset/update/1", data=post_data)
+
+    # Afirmar que se llamó al creador de log de cambios
+    mock_dataset_service.create_dschangelog.assert_called_once()
+
+    logout(test_client)
+
+
+# --- NUEVOS TESTS UNITARIOS ---
+
+
+def test_dschangelog_repository_create_new_record():
+    """
+    Prueba la función del repositorio que crea el DSChangeLog,
+    asegurando que los datos de DSMetaData se mapean correctamente.
+    """
+    # Mocks para DSMetaData y DataSet (simulando current_user.id = 1)
+    mock_ds_meta_data = MagicMock()
+    mock_ds_meta_data.title = "Change Title"
+    mock_ds_meta_data.description = "Change Description"
+    mock_ds_meta_data.league = "ACB"
+    mock_ds_meta_data.tags = "tag1, tag2"
+    mock_ds_meta_data.updated_at = datetime.now(timezone.utc)
+
+    # Mockear el método 'create' del BaseRepository
+    mock_repo = DSChangeLogRepository()
+    mock_repo.create = MagicMock()
+
+    with patch('app.modules.dataset.repositories.current_user', MagicMock(id=1, is_authenticated=True)):
+        mock_repo.create_new_record(
+            dataset_id=10,
+            ds_meta_data=mock_ds_meta_data
+        )
+
+    # Verificar que 'create' fue llamado con los argumentos correctos
+    mock_repo.create.assert_called_once()
+    args, kwargs = mock_repo.create.call_args
+
+    assert kwargs['data_set_id'] == 10
+    assert kwargs['title'] == "Change Title"
+    assert kwargs['description'] == "Change Description"
+    assert kwargs['league'] == mock_ds_meta_data.league
+    assert kwargs['tags'] == "tag1, tag2"
+    assert kwargs['user_id'] == 1
+
+
+@patch('app.modules.dataset.services.DSChangeLogRepository')
+def test_dataset_service_create_dschangelog(MockDSChangeLogRepository):
+    """
+    Prueba que el servicio llama al repositorio con los argumentos
+    correctos (dataset_id y ds_meta_data).
+    """
+
+    # Mocks
+    mock_dschangelog_repo = MockDSChangeLogRepository.return_value
+    dataset_service = DataSetService()
+
+    mock_dataset = MagicMock()
+    mock_dataset.id = 5
+    mock_dataset.ds_meta_data = MagicMock()
+
+    # Ejecución
+    dataset_service.create_dschangelog(dataset=mock_dataset)
+
+    # Verificación
+    mock_dschangelog_repo.create_new_record.assert_called_once_with(
+        dataset_id=5,
+        ds_meta_data=mock_dataset.ds_meta_data
+    )

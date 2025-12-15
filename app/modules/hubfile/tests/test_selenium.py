@@ -13,7 +13,7 @@ def test_hubfile_index():
         host = get_host_for_selenium_testing()
 
         # Open the index page
-        driver.get(f"{host}/hubfile")
+        driver.get(f"{host}/file/view/1")
 
         # Wait a little while to make sure the page has loaded completely
         time.sleep(4)
@@ -27,7 +27,3 @@ def test_hubfile_index():
     finally:
         # Close the browser
         close_driver(driver)
-
-
-# Call the test function
-test_hubfile_index()
