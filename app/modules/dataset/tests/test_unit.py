@@ -290,9 +290,11 @@ def test_complete_dataset_workflow(mock_dataset, mock_basket_model, temp_file, t
 # --- NUEVOS TESTS DE INTEGRACIÓN ---
 
 
-@patch('app.modules.dataset.routes.dataset_service')
-@patch('app.modules.dataset.forms.DataSet')
-def test_update_dataset_validation_passes_with_bm(mock_ds_model, mock_dataset_service, test_client, mock_dataset_with_bm):  # noqa: E501
+@patch("app.modules.dataset.routes.dataset_service")
+@patch("app.modules.dataset.forms.DataSet")
+def test_update_dataset_validation_passes_with_bm(
+    mock_ds_model, mock_dataset_service, test_client, mock_dataset_with_bm
+):  # noqa: E501
     """
     Prueba que la validación del formulario de actualización pasa,
     incluso con FieldList(BasketModelForm) presente,
@@ -318,7 +320,7 @@ def test_update_dataset_validation_passes_with_bm(mock_ds_model, mock_dataset_se
         "basket_models-0-league": "nba",
         "basket_models-0-tags": "tagA",
         "basket_models-0-version": "1.0",
-        "basket_models-0-csrf_token": "mock_token"
+        "basket_models-0-csrf_token": "mock_token",
     }
 
     # Asegurar la autenticación
@@ -333,7 +335,7 @@ def test_update_dataset_validation_passes_with_bm(mock_ds_model, mock_dataset_se
 
     # Aseguramos que la aserción de 200 pasa. Si falla, mostramos el cuerpo de la respuesta real.
     if response.status_code != 200:
-        error_info = response.data.decode('utf-8', errors='ignore')
+        error_info = response.data.decode("utf-8", errors="ignore")
         # Utilizamos pytest.fail() para asegurar que el test se detiene y muestra el mensaje.
         pytest.fail(f"La validación falló. Status: {response.status_code}. Respuesta: {error_info}")
 
@@ -348,7 +350,7 @@ def test_update_dataset_validation_passes_with_bm(mock_ds_model, mock_dataset_se
     logout(test_client)
 
 
-@patch('app.modules.dataset.routes.dataset_service')
+@patch("app.modules.dataset.routes.dataset_service")
 def test_update_dataset_creates_changelog_on_success(mock_dataset_service, test_client, mock_dataset_with_bm):
     """
     Prueba más simple para asegurar que el log de cambios se llama después de la validación
@@ -396,25 +398,22 @@ def test_dschangelog_repository_create_new_record():
     mock_repo = DSChangeLogRepository()
     mock_repo.create = MagicMock()
 
-    with patch('app.modules.dataset.repositories.current_user', MagicMock(id=1, is_authenticated=True)):
-        mock_repo.create_new_record(
-            dataset_id=10,
-            ds_meta_data=mock_ds_meta_data
-        )
+    with patch("app.modules.dataset.repositories.current_user", MagicMock(id=1, is_authenticated=True)):
+        mock_repo.create_new_record(dataset_id=10, ds_meta_data=mock_ds_meta_data)
 
     # Verificar que 'create' fue llamado con los argumentos correctos
     mock_repo.create.assert_called_once()
     args, kwargs = mock_repo.create.call_args
 
-    assert kwargs['data_set_id'] == 10
-    assert kwargs['title'] == "Change Title"
-    assert kwargs['description'] == "Change Description"
-    assert kwargs['league'] == mock_ds_meta_data.league
-    assert kwargs['tags'] == "tag1, tag2"
-    assert kwargs['user_id'] == 1
+    assert kwargs["data_set_id"] == 10
+    assert kwargs["title"] == "Change Title"
+    assert kwargs["description"] == "Change Description"
+    assert kwargs["league"] == mock_ds_meta_data.league
+    assert kwargs["tags"] == "tag1, tag2"
+    assert kwargs["user_id"] == 1
 
 
-@patch('app.modules.dataset.services.DSChangeLogRepository')
+@patch("app.modules.dataset.services.DSChangeLogRepository")
 def test_dataset_service_create_dschangelog(MockDSChangeLogRepository):
     """
     Prueba que el servicio llama al repositorio con los argumentos
@@ -434,6 +433,5 @@ def test_dataset_service_create_dschangelog(MockDSChangeLogRepository):
 
     # Verificación
     mock_dschangelog_repo.create_new_record.assert_called_once_with(
-        dataset_id=5,
-        ds_meta_data=mock_dataset.ds_meta_data
+        dataset_id=5, ds_meta_data=mock_dataset.ds_meta_data
     )
