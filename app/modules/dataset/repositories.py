@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask_login import current_user
 from sqlalchemy import desc, func
 
-from app.modules.dataset.models import DataSet, DSDownloadRecord, DSMetaData, DSViewRecord
+from app.modules.dataset.models import DataSet, DSChangeLog, DSDownloadRecord, DSMetaData, DSViewRecord
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,22 @@ class DSViewRecordRepository(BaseRepository):
             dataset_id=dataset.id,
             view_date=datetime.now(timezone.utc),
             view_cookie=user_cookie,
+        )
+
+
+class DSChangeLogRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(DSChangeLog)
+
+    def create_new_record(self, dataset_id: int, ds_meta_data: DSMetaData) -> DSChangeLog:
+        return self.create(
+            data_set_id=dataset_id,
+            title=ds_meta_data.title,
+            description=ds_meta_data.description,
+            league=ds_meta_data.league,
+            tags=ds_meta_data.tags,
+            updated_at=ds_meta_data.updated_at,
+            user_id=current_user.id if current_user.is_authenticated else None
         )
 
 

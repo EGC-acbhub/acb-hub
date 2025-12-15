@@ -11,6 +11,7 @@ from app.modules.basketmodel.repositories import BasketModelRepository, BMMetaDa
 from app.modules.dataset.models import DataSet, DSViewRecord
 from app.modules.dataset.repositories import (
     DataSetRepository,
+    DSChangeLogRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
@@ -38,6 +39,7 @@ class DataSetService(BaseService):
         super().__init__(DataSetRepository())
         self.basket_model_repository = BasketModelRepository()
         self.dsmetadata_repository = DSMetaDataRepository()
+        self.dschangelog_repository = DSChangeLogRepository()
         self.bmmetadata_repository = BMMetaDataRepository()
         self.dsdownloadrecord_repository = DSDownloadRecordRepository()
         self.hubfiledownloadrecord_repository = HubfileDownloadRecordRepository()
@@ -118,6 +120,9 @@ class DataSetService(BaseService):
             self.repository.session.rollback()
             raise exc
         return dataset
+
+    def create_dschangelog(self, dataset: DataSet):
+        self.dschangelog_repository.create_new_record(dataset_id=dataset.id, ds_meta_data=dataset.ds_meta_data)
 
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)

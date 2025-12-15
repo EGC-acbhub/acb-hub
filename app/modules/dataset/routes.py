@@ -109,6 +109,7 @@ def update_dataset(dataset_id):
 
         try:
             logger.info("Updating dataset...")
+            dataset_service.create_dschangelog(dataset=dataset)
             dataset = dataset_service.update_dsmetadata(dataset.ds_meta_data_id, **form.get_dsmetadata())
             logger.info(f"Updated dataset: {dataset}")
 

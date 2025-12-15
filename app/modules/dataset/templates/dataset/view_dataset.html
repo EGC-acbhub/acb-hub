@@ -298,6 +298,87 @@
             <i data-feather="download" class="center-button-icon"></i>
             Download all ({{ dataset.get_file_total_size_for_human() }})
         </a>
+
+        <div class="list-group mt-3">
+
+            <div class="list-group-item">
+
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <h4 style="margin-bottom: 0px">Change History</h4>
+                        <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.change_logs|length }}</span></h4>
+                    </div>
+                </div>
+                
+            </div>
+
+            {% if dataset.change_logs %}
+                {% for log in dataset.change_logs|sort(attribute='updated_at', reverse=True) %}
+                    
+                    {% set log_index = loop.index %} {# 1, 2, 3... (más nuevo es 1) #}
+                    {% set collapse_id = 'change_log_' ~ log.id %}
+
+                    <div class="list-group-item p-2">
+                        
+                        <div class="row align-items-center">
+                            
+                            <div class="col-8">
+                                <small class="text-muted me-2">
+                                    #{{ log_index }}
+                                </small>
+                                
+                                <div class="d-flex flex-column">
+                                    {% if log.user %}
+                                        <strong>{{ log.user.profile.surname }}, {{ log.user.profile.name }}</strong>
+                                    {% else %}
+                                        <strong>Unknown User</strong>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        {{ log.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-4 text-end">
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#{{ collapse_id }}" 
+                                        aria-expanded="false" 
+                                        aria-controls="{{ collapse_id }}"
+                                        style="border-radius: 5px;">
+                                    <i data-feather="eye"></i> View
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="collapse pt-2" id="{{ collapse_id }}">
+                            <hr class="my-2">
+                            <p class="mb-1">
+                                <strong>Título:</strong> {{ log.title }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Descripción:</strong> {{ log.description }}
+                            </p>
+                            
+                            <small>
+                                <span class="badge bg-secondary me-1">
+                                    {{ log.league.name.replace("_", " ").title() }}
+                                </span>
+                                {% for tag in log.tags.split(',') %}
+                                    <span class="badge bg-info text-dark me-1">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </small>
+                        </div>
+                        </div>
+                {% endfor %}
+            {% else %}
+                <div class="list-group-item text-muted">
+                    No hay modificaciones registradas para este dataset.
+                </div>
+            {% endif %}
+
+        </div>
     </div>
     
 </div>

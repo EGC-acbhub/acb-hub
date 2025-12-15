@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from urllib.parse import quote
 
@@ -34,6 +34,7 @@ class DSMetaData(db.Model):
     description = db.Column(db.Text, nullable=False)
     league = db.Column(SQLAlchemyEnum(League), nullable=False)
     tags = db.Column(db.String(120))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey("ds_metrics.id"))
     ds_metrics = db.relationship("DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete")
 
@@ -47,6 +48,7 @@ class DataSet(db.Model):
 
     ds_meta_data = db.relationship("DSMetaData", backref=db.backref("data_set", uselist=False))
     basket_models = db.relationship("BasketModel", backref="data_set", lazy=True, cascade="all, delete")
+    change_logs = db.relationship("DSChangeLog", backref="data_set", lazy=True, cascade="all, delete")
 
     download_count: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -132,3 +134,17 @@ class DSViewRecord(db.Model):
 
     def __repr__(self):
         return f"<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>"
+
+
+class DSChangeLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    league = db.Column(SQLAlchemyEnum(League), nullable=False)
+    tags = db.Column(db.String(120))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    data_set_id = db.Column(db.Integer, db.ForeignKey("data_set.id"), nullable=False)
+
+    user = db.relationship("User", backref="change_logs", lazy=True)

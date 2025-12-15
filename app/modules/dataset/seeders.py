@@ -1,12 +1,12 @@
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 
 from app.modules.auth.models import User
 from app.modules.basketmodel.models import BasketModel, BMMetaData
-from app.modules.dataset.models import DataSet, DSMetaData, DSMetrics, League
+from app.modules.dataset.models import DataSet, DSChangeLog, DSMetaData, DSMetrics, League
 from app.modules.hubfile.models import Hubfile
 from core.seeders.BaseSeeder import BaseSeeder
 
@@ -50,6 +50,21 @@ class DataSetSeeder(BaseSeeder):
             for i in range(4)
         ]
         seeded_datasets = self.seed(datasets)
+
+        # Create DSChangeLog instances
+        ds_change_log_list = [
+            DSChangeLog(
+                title=f"Sample dataset {i + 1}",
+                description=f"Old description for dataset {i + 1}",
+                league=League.LEGA,
+                tags="tag1, tag2",
+                updated_at=datetime.now(timezone.utc) - timedelta(days=1),
+                user_id=user1.id if i % 2 == 0 else user2.id,
+                data_set_id=seeded_datasets[i].id
+            )
+            for i in range(4)
+        ]
+        self.seed(ds_change_log_list)
 
         # Assume there are 12 CSV files, create corresponding BMMetaData and BasketModel
         bm_meta_data_list = [
