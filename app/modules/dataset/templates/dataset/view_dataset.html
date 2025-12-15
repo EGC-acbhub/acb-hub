@@ -77,13 +77,14 @@
 
                 {% if dataset.ds_meta_data.deposition_id %}
                 <div class="row mb-2">
-                    
+
                         <div class="col-md-4 col-12">
                             <span class=" text-secondary">
-                                Zenodo record
+                                {% if service_type == 'zenodo' %}Zenodo record{% else %}Test Deposition{% endif %}
                             </span>
                         </div>
 
+                        {% if service_type == 'zenodo' %}
                         {% if FLASK_ENV == 'production' %}
                             <div class="col-md-8 col-12">
                                 <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
@@ -101,6 +102,11 @@
                                 <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
                                     https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
                                 </a>
+                            </div>
+                        {% endif %}
+                        {% else %}
+                            <div class="col-md-8 col-12">
+                                <span class="text-muted">Deposition ID: {{ dataset.ds_meta_data.deposition_id }}</span>
                             </div>
                         {% endif %}
 

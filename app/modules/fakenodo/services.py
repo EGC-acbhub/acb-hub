@@ -13,6 +13,27 @@ class FakenodoService(BaseService):
     def __init__(self):
         super().__init__(FakenodoRepository())
 
+    def create_deposition(self, metadata):
+        """Create a new deposition from metadata dict (for API use)."""
+        deposition = FakeDeposition()
+        deposition.title = metadata.get("title", "")
+        deposition.description = metadata.get("description", "")
+        deposition.upload_type = metadata.get("upload_type", "dataset")
+        deposition.creators = json.dumps(metadata.get("creators", []))
+        deposition.keywords = json.dumps(metadata.get("keywords", []))
+        deposition.access_right = metadata.get("access_right", "open")
+        deposition.license = metadata.get("license", "CC-BY-4.0")
+        deposition.state = "unsubmitted"
+
+        # Generate conceptrecid (same as id for simplicity)
+        db.session.add(deposition)
+        db.session.flush()  # Get the ID
+        deposition.conceptrecid = deposition.id
+        db.session.commit()
+
+        # Return Zenodo-compatible response
+        return deposition.to_dict()
+
     def create_new_deposition(self, dataset):
         """Create a new deposition with metadata (matches ZenodoService interface)."""
 
@@ -33,24 +54,7 @@ class FakenodoService(BaseService):
             "license": "CC-BY-4.0",
         }
 
-        deposition = FakeDeposition()
-        deposition.title = metadata.get("title", "")
-        deposition.description = metadata.get("description", "")
-        deposition.upload_type = metadata.get("upload_type", "dataset")
-        deposition.creators = json.dumps(metadata.get("creators", []))
-        deposition.keywords = json.dumps(metadata.get("keywords", []))
-        deposition.access_right = metadata.get("access_right", "open")
-        deposition.license = metadata.get("license", "CC-BY-4.0")
-        deposition.state = "unsubmitted"
-
-        # Generate conceptrecid (same as id for simplicity)
-        db.session.add(deposition)
-        db.session.flush()  # Get the ID
-        deposition.conceptrecid = deposition.id
-        db.session.commit()
-
-        # Return Zenodo-compatible response
-        return deposition.to_dict()
+        return self.create_deposition(metadata)
 
     def upload_file(self, dataset, deposition_id, basket_model, user=None):
         """Upload a file to a deposition (matches ZenodoService interface)."""

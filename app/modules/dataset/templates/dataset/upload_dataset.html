@@ -12,12 +12,16 @@
                 <div class="alert-message">
 
                     <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
-                        connection to the Zenodo API</h4>
+                        connection to the {{ 'Zenodo API' if service_type == 'zenodo' else 'deposition service' }}</h4>
                     <p class="p-0 m-0">
+                        {% if service_type == 'zenodo' %}
                         There seems to be some kind of problem with the Zenodo API and synchronization of your dataset
                         files may not be possible. We will save your files locally to eventually synchronize them with
                         Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
                         anything about it.
+                        {% else %}
+                        There seems to be some kind of problem with the deposition service. Please try again later.
+                        {% endif %}
                     </p>
                 </div>
             </div>
@@ -331,8 +335,8 @@
 
                 <label class="form-check">
                     <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
-                    <span class="form-check-label" style="font-size: 15px">
-                                I agree to have my feature models automatically uploaded to Zenodo and made available to the public according to the <a
+                        <span class="form-check-label" style="font-size: 15px">
+                                I agree to have my feature models automatically uploaded to {{ 'Zenodo' if service_type == 'zenodo' else 'the test repository' }} and made available to the public according to the <a
                             href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
                             </span>
                 </label>

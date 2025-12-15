@@ -28,6 +28,12 @@ def get_zenodo_service():
         return ZenodoService()
 
 
+def get_zenodo_service_type() -> str:
+    """Return the type of Zenodo service currently configured."""
+    use_fakenodo = os.getenv("USE_FAKENODO", "true").lower() != "false"
+    return "fakenodo" if use_fakenodo else "zenodo"
+
+
 class ZenodoService(BaseService):
     def get_zenodo_url(self):
         FLASK_ENV = os.getenv("FLASK_ENV", "development")

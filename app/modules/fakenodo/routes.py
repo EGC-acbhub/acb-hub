@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, render_template, request
 from werkzeug.exceptions import BadRequest, NotFound
 
 from app.modules.fakenodo import fakenodo_bp
@@ -9,7 +9,8 @@ fakenodo_service = FakenodoService()
 
 @fakenodo_bp.route("/fakenodo", methods=["GET"])
 def index():
-    return jsonify({"message": "Fakenodo API is running", "status": "ok"})
+    depositions = fakenodo_service.list_depositions()
+    return render_template("fakenodo/index.html", depositions=depositions)
 
 
 @fakenodo_bp.route("/api/deposit/depositions", methods=["POST"])
@@ -23,10 +24,9 @@ def create_deposition():
         metadata = data["metadata"]
         deposition = fakenodo_service.create_deposition(metadata)
 
-        response = deposition.to_dict()
-        response["files"] = []  # New depositions have no files yet
+        deposition["files"] = []  # New depositions have no files yet
 
-        return jsonify(response), 201
+        return jsonify(deposition), 201
 
     except Exception as e:
         return jsonify({"message": str(e), "status": "error"}), 400

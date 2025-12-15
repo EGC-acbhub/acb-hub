@@ -1,8 +1,67 @@
 {% extends "base_template.html" %}
 
-{% block title %}View fakenodo{% endblock %}
+{% block title %}Fakenodo Test Depositions{% endblock %}
 
 {% block content %}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h1 class="h2 mb-3"><b>Fakenodo</b> Test Depositions</h1>
+        <p class="text-muted">This page shows all test depositions created using the fakenodo service for development and testing.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Test Depositions ({{ depositions|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if depositions %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>DOI</th>
+                                <th>Created</th>
+                                <th>Files</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for deposition in depositions %}
+                            <tr>
+                                <td>{{ deposition.id }}</td>
+                                <td>{{ deposition.metadata.title }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if deposition.state == 'done' else 'warning' }}">
+                                        {{ deposition.state }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if deposition.doi %}
+                                        {{ deposition.doi }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ deposition.created.split('T')[0] if deposition.created else '-' }}</td>
+                                <td>{{ deposition.files|length }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No test depositions found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 

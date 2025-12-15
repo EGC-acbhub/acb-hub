@@ -26,7 +26,7 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
 )
-from app.modules.zenodo.services import get_zenodo_service
+from app.modules.zenodo.services import get_zenodo_service, get_zenodo_service_type
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +74,10 @@ def create_dataset():
             dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
 
             try:
-                # iterate for each feature model (one feature model = one request to Zenodo)
-                for feature_model in dataset.feature_models:
-                    zenodo_service.upload_file(dataset, deposition_id, feature_model)
+                # iterate for each basket model (one basket model = one feature model file)
+                logger.info(f"Uploading files to deposition {deposition_id}")
+                for basket_model in dataset.basket_models:
+                    zenodo_service.upload_file(dataset, deposition_id, basket_model)
 
                 # publish deposition
                 zenodo_service.publish_deposition(deposition_id)
@@ -93,7 +94,7 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/upload_dataset.html", form=form)
+    return render_template("dataset/upload_dataset.html", form=form, service_type=get_zenodo_service_type())
 
 
 @dataset_bp.route("/dataset/update/<int:dataset_id>", methods=["GET", "POST"])
@@ -262,7 +263,7 @@ def get_unsynchronized_dataset(dataset_id):
     if not dataset:
         abort(404)
 
-    return render_template("dataset/view_dataset.html", dataset=dataset)
+    return render_template("dataset/view_dataset.html", dataset=dataset, service_type=get_zenodo_service_type())
 
 
 @dataset_bp.route("/dataset/view/<int:dataset_id>", methods=["GET"])
@@ -280,4 +281,4 @@ def view_dataset(dataset_id):
     if not is_owner and not is_public:
         abort(403)
 
-    return render_template("dataset/view_dataset.html", dataset=dataset)
+    return render_template("dataset/view_dataset.html", dataset=dataset, service_type=get_zenodo_service_type())
