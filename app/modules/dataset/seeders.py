@@ -60,7 +60,7 @@ class DataSetSeeder(BaseSeeder):
                 tags="tag1, tag2",
                 updated_at=datetime.now(timezone.utc) - timedelta(days=1),
                 user_id=user1.id if i % 2 == 0 else user2.id,
-                data_set_id=seeded_datasets[i].id
+                data_set_id=seeded_datasets[i].id,
             )
             for i in range(4)
         ]

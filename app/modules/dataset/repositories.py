@@ -60,7 +60,7 @@ class DSChangeLogRepository(BaseRepository):
             league=ds_meta_data.league,
             tags=ds_meta_data.tags,
             updated_at=ds_meta_data.updated_at,
-            user_id=current_user.id if current_user.is_authenticated else None
+            user_id=current_user.id if current_user.is_authenticated else None,
         )
 
 
